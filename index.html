@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+        textarea {
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .popup {
+            visibility: hidden;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgb(44, 44, 44);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+            width: 300px;
+            text-align: center;
+        }
+        .popup.active {
+            visibility: visible;
+        }
+        .popup h2 {
+            margin-top: 0;
+        }
+        .popup p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .popup button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .popup button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Submit Your Movie Review</h1>
+        <form id="reviewForm">
+            <textarea id="review" name="review" rows="4" placeholder="Enter your review here..."></textarea><br><br>
+            <input type="submit" value="Analyze Sentiment">
+        </form>
+    </div>
+
+    <div id="popup" class="popup">
+        <h2>Sentiment Analysis Result</h2>
+        <p id="result"></p>
+        <button onclick="closePopup()">Close</button>
+    </div>
+
+    <script>
+        const form = document.getElementById('reviewForm');
+        const popup = document.getElementById('popup');
+        const resultText = document.getElementById('result');
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const review = document.getElementById('review').value;
+
+            fetch('/submit-review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ review: review })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultText.innerText = `Error: ${data.error}`;
+                } else {
+                    const sentiment = data[0].sentiment;
+                    const confidence = data[0].confidence_scores;
+                    resultText.innerHTML = `
+                        Sentiment: <strong>${sentiment}</strong><br>
+                        Positive: ${confidence.positive}<br>
+                        Neutral: ${confidence.neutral}<br>
+                        Negative: ${confidence.negative}
+                    `;
+                }
+                popup.classList.add('active');
+            })
+            .catch(error => {
+                resultText.innerText = `Error: ${error}`;
+                popup.classList.add('active');
+            });
+        });
+
+        function closePopup() {
+            popup.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
